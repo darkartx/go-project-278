@@ -29,9 +29,11 @@ jobs:
         key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-golang-
- 
-    - name: Install dependencies
-      run: go get .
+      id: setup-golang-caches
+
+    - name: Download Go modules
+      if: steps.setup-golang-caches.outputs.cache-hit != 'true'
+      run: go mod download
 
     - name: Build
       run: go build -v ./...
