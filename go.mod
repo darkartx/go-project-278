@@ -1,4 +1,4 @@
-module github.com/darkartx/go-project-278
+module code
 
 go 1.24.5
 
@@ -6,6 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.11.0
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.11.1
+	github.com/urfave/cli/v3 v3.6.2
 )
 
 require (

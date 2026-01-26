@@ -1,24 +1,18 @@
-package main
+package code
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPingRoute(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	router := gin.Default()
+	router := setupRouter()
 
-	router.GET("/ping", func(c *gin.Context) {
-		c.String(http.StatusOK, "pong")
-	})
-
-	req, _ := http.NewRequest("GET", "/ping", nil)
 	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/ping", nil)
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)

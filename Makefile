@@ -10,11 +10,25 @@ tidy: ## Tidy up dependencies, format code, and run vet
 	go vet ./...
 
 dev: ## Run the API server in development mode
-	go run main.go api
+	air
 
 .PHONY: test
 test: ## Run all tests
-	go test -v ./...
+	go mod tidy
+	go test -v
+
+test_coverage: ## Run all tests with coverage
+	go mod tidy
+	go test -v -coverprofile=coverage.out
+
+install: ## Install app to system
+	go install
+
+lint: ## Lint code
+	golangci-lint run cmd/url_shortener
+
+build: ## Build app
+	go build -o bin/url_shortener ./cmd/url_shortener
 
 db-migrate: ## Run database migrations
 	$(MIGRATOR) up

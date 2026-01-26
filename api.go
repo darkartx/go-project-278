@@ -1,4 +1,4 @@
-package main
+package code
 
 import (
 	"fmt"
@@ -9,7 +9,17 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func main() {
+func setupRouter() *gin.Engine {
+	router := gin.Default()
+
+	router.GET("/ping", func(c *gin.Context) {
+		c.String(http.StatusOK, "pong")
+	})
+
+	return router
+}
+
+func Api() error {
 	if err := godotenv.Load(); err != nil {
 		fmt.Printf(".env loading error: %s", err)
 	}
@@ -19,13 +29,7 @@ func main() {
 		port = "8080"
 	}
 
-	router := gin.Default()
+	router := setupRouter()
 
-	router.GET("/ping", func(c *gin.Context) {
-		c.String(http.StatusOK, "pong")
-	})
-
-	if err := router.Run(":" + port); err != nil {
-		fmt.Printf("Server startup error: %s", err)
-	}
+	return router.Run(":" + port)
 }
