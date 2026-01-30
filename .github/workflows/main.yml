@@ -41,7 +41,7 @@ jobs:
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v3
       with:
-        version: v2.8
+        version: v2.8.0
         install-mode: binary
 
     - name: Test
