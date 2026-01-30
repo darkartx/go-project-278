@@ -41,7 +41,8 @@ jobs:
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v3
       with:
-        version: latest
+        version: v2.8
+        install-mode: binary
 
     - name: Test
       run: go test -v -coverprofile=coverage.out --race ./...
