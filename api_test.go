@@ -11,7 +11,7 @@ import (
 
 func TestPingRoute(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	router := setupRouter()
+	router := setupRouter(makeConfig())
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
@@ -19,4 +19,8 @@ func TestPingRoute(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, "pong", w.Body.String())
+}
+
+func makeConfig() *Config {
+	return NewConfig(false, "", "8080")
 }
