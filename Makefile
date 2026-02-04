@@ -10,7 +10,7 @@ tidy: ## Tidy up dependencies, format code, and run vet
 	go vet ./...
 
 dev: ## Run the API server in development mode
-	air
+	air s
 
 .PHONY: test
 test: ## Run all tests
@@ -28,7 +28,7 @@ lint: ## Lint code
 	golangci-lint run cmd/url_shortener
 
 build: ## Build app
-	go build -o bin/url_shortener ./cmd/url_shortener
+	go build -ldflags="-X code.commitHash=$(git rev-parse HEAD)" -o bin/url_shortener ./cmd/url_shortener
 
 db-migrate: ## Run database migrations
 	$(MIGRATOR) up
@@ -44,3 +44,9 @@ db-status: ## Show database migration status
 
 db-generate: ## Generate database code using sqlc
 	docker run --rm -v $(shell pwd):/src -w /src sqlc/sqlc generate
+
+docker-build:
+	docker build -t url_shortener \
+		--label "org.opencontainers.image.source=https://github.com/darkartx/go-project-278" \
+		--label "org.opencontainers.image.description=Url shortener image" \
+		.

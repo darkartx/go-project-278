@@ -3,6 +3,7 @@ package code
 import (
 	"net/http"
 
+	"github.com/gin-contrib/rollbar"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,6 +24,7 @@ func Api(config *Config) error {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	setupRollbar()
 	router := setupRouter(config)
 
 	return router.Run(":" + config.Port)
@@ -30,9 +32,11 @@ func Api(config *Config) error {
 
 func setupRouter(config *Config) *gin.Engine {
 	router := gin.Default()
+	router.Use(rollbar.Recovery(true))
 
 	router.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
+		panic("a problem")
 	})
 
 	return router

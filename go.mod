@@ -3,8 +3,10 @@ module code
 go 1.24.5
 
 require (
+	github.com/gin-contrib/rollbar v1.0.4
 	github.com/gin-gonic/gin v1.11.0
 	github.com/joho/godotenv v1.5.1
+	github.com/rollbar/rollbar-go v1.4.8
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v3 v3.6.2
 )

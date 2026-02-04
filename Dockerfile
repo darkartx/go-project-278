@@ -12,10 +12,15 @@ RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 COPY . .
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
-  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /build/app .
+  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-X code.commitHash=$(git rev-parse HEAD)" -o /build/app ./cmd/url_shortener
 
 # App
 FROM alpine:3.22
+
+ENV DEBUG=false
+ENV PORT=8080
+ENV ROLLBAR_SERVER_ROOT=https://github.com/darkartx/go-project-278
+EXPOSE 8080
 
 WORKDIR /app
 
@@ -26,7 +31,5 @@ COPY --from=build /go/bin/goose /usr/local/bin/goose
 
 COPY bin/run.sh /app/bin/run.sh
 RUN chmod +x /app/bin/run.sh
-
-EXPOSE 8080
 
 CMD ["/app/bin/run.sh"]
