@@ -77,7 +77,7 @@ jobs:
         run: npx @redocly/cli lint api.yml
 
       - name: Generate static HTML docs
-        run: npx @redocly/cli build-docs api.yml --output docs/index.html --experimental-commands
+        run: npx @redocly/cli build-docs api.yml --output docs/index.html
 
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
