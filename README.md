@@ -3,5 +3,5 @@
 [![CI](https://github.com/darkartx/go-project-278/actions/workflows/test.yml/badge.svg)](https://github.com/darkartx/go-project-278/actions)
 
 ### Links:
-[Render](https://go-project-278-jxjc.onrender.com)
+[Render](https://go-project-278-migu.onrender.com)
 [Api Doc](https://darkartx.github.io/go-project-278)

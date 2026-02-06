@@ -3,7 +3,7 @@ info:
   title: Url Shortener Api
   version: '1.0'
 servers:
-  - url: https://go-project-278-jxjc.onrender.com/api
+  - url: https://go-project-278-migu.onrender.com/api
   - url: http://dev.home:8080/api
 paths:
   /links:
@@ -171,6 +171,8 @@ components:
           type: string
           description: Link code
           example: "ABC123"
+          maxLength: 50
+          minLength: 6
     Error:
       type: object
       required:

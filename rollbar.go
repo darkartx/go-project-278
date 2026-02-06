@@ -9,11 +9,11 @@ import (
 
 var commitHash string
 
-func setupRollbar() {
+func setupRollbar() bool {
 	token := getEnv("ROLLBAR_TOKEN", "")
 
 	if token == "" {
-		return
+		return false
 	}
 
 	fmt.Println("ROLLBAR_TOKEN: ", token)
@@ -27,6 +27,8 @@ func setupRollbar() {
 	rollbar.SetCodeVersion(commitHash)
 	rollbar.SetServerHost(getEnv("HOSTNAME", ""))
 	rollbar.SetServerRoot(getEnv("ROLLBAR_SERVER_ROOT", "/"))
+
+	return true
 }
 
 func getEnv(key string, defaultValue string) string {

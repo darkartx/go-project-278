@@ -1,10 +1,18 @@
 package handlers
 
 import (
+	"code/internal"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+)
+
+const (
+	shortNameMin = 6
+	shortNameMax = 10
 )
 
 type LinkHandler struct {
@@ -34,7 +42,7 @@ func (h *LinkHandler) List(c *gin.Context) {
 }
 
 func (h *LinkHandler) Create(c *gin.Context) {
-	input, err := h.parseAndValidateParams(c)
+	input, err := parseAndValidateParams(c)
 
 	if err != nil {
 		handleError(http.StatusBadRequest, err, c)
@@ -43,11 +51,16 @@ func (h *LinkHandler) Create(c *gin.Context) {
 
 	baseUrl := getBaseUrl(c)
 
-	originalUrl := input.OriginalUrl
-	shortName := "test"
-	shortUrl := baseUrl + "/r/" + shortName
+	var shortName string
+	if len(input.ShortName) > 0 {
+		shortName = input.ShortName
+	} else {
+		shortName = internal.GenerateShortName(shortNameMin, shortNameMax)
+	}
 
-	c.JSON(http.StatusCreated, Link{1, originalUrl, shortName, shortUrl})
+	shortUrl := fmt.Sprint(baseUrl, "/r/", shortName)
+
+	c.JSON(http.StatusCreated, Link{1, input.OriginalUrl, shortName, shortUrl})
 }
 
 func (h *LinkHandler) Get(c *gin.Context) {
@@ -69,7 +82,7 @@ func (h *LinkHandler) Update(c *gin.Context) {
 	id, err := parseId(c)
 
 	if err == nil {
-		input, err = h.parseAndValidateParams(c)
+		input, err = parseAndValidateParams(c)
 	}
 
 	if err != nil {
@@ -79,11 +92,16 @@ func (h *LinkHandler) Update(c *gin.Context) {
 
 	baseUrl := getBaseUrl(c)
 
-	originalUrl := input.OriginalUrl
-	shortName := "test"
-	shortUrl := baseUrl + "/r/" + shortName
+	var shortName string
+	if len(input.ShortName) > 0 {
+		shortName = input.ShortName
+	} else {
+		shortName = internal.GenerateShortName(shortNameMin, shortNameMax)
+	}
 
-	c.JSON(http.StatusCreated, Link{id, originalUrl, shortName, shortUrl})
+	shortUrl := fmt.Sprint(baseUrl, "/r/", shortName)
+
+	c.JSON(http.StatusOK, Link{id, input.OriginalUrl, shortName, shortUrl})
 }
 
 func (h *LinkHandler) Delete(c *gin.Context) {
@@ -97,18 +115,30 @@ func (h *LinkHandler) Delete(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func (h *LinkHandler) parseAndValidateParams(c *gin.Context) (LinkParams, error) {
+func parseAndValidateParams(c *gin.Context) (LinkParams, error) {
 	var params LinkParams
 
 	if err := c.ShouldBindJSON(&params); err != nil {
+		validationErrors, ok := err.(validator.ValidationErrors)
+
+		if ok && len(validationErrors) > 0 {
+			firstError := validationErrors[0]
+			switch firstError.StructField() {
+			case "OriginalUrl":
+				err = ErrorInvalidOriginalUrl
+			case "ShortName":
+				err = ErrorInvalidShortName
+			}
+		}
+
 		return LinkParams{}, err
 	}
 
 	return params, nil
 }
 
-func parseId(c *gin.Context) (int64, error) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+func parseId(c *gin.Context) (uint64, error) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil || id <= 0 {
 		return 0, ErrorInvalidId
 	}
@@ -124,11 +154,13 @@ func handleError(code int, err error, c *gin.Context) {
 }
 
 func getBaseUrl(c *gin.Context) string {
-	scheme := "http://"
+	scheme := "http"
 
-	if c.Request.TLS != nil {
-		scheme = "https://"
+	if c.Request.Header.Get("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	} else if c.Request.TLS != nil {
+		scheme = "https"
 	}
 
-	return scheme + c.Request.Host
+	return fmt.Sprintf("%s://%s", scheme, c.Request.Host)
 }

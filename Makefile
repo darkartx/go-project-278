@@ -18,10 +18,10 @@ dev: ## Run the API server in development mode
 
 .PHONY: test
 test: tidy ## Run all tests
-	go test -v --race
+	go test -v --race ./...
 
 test_coverage: tidy ## Run all tests with coverage
-	go test -v -coverprofile=coverage.out --race
+	go test -v -coverprofile=coverage.out --race ./...
 
 install: ## Install app to system
 	go install
