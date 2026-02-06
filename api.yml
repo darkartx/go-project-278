@@ -3,64 +3,8 @@ info:
   title: Url Shortener Api
   version: '1.0'
 servers:
-  - url: http://localhost:8080/api/
-  - url: https://go-project-278-jxjc.onrender.com/api/
-  - url: http://dev.home:8080/api/
-components:
-  schemas:
-    LinkList:
-      type: array
-      items:
-        $ref: "#/components/schemas/Link"
-    Link:
-      type: object
-      required:
-        - id
-        - original_url
-        - short_name
-        - short_url
-      properties:
-        id:
-          type: integer
-          description: Link id
-          example: 1
-        original_url:
-          type: string
-          description: Link url
-          example: "https://google.com"
-        short_name:
-          type: string
-          description: Link short url code
-          example: "ABC123"
-        short_url:
-          type: string
-          description: Link short url
-          example: "{server}/r/ABC123"
-    LinkParams:
-      type: object
-      required:
-        - original_url
-      properties:
-        original_url:
-          type: string
-          description: Link url
-          example: "https://google.com"
-        short_name:
-          type: string
-          description: Link code
-          example: "ABC123"
-    Error:
-      type: object
-      required:
-        - error
-        - message
-      properties:
-        error:
-          type: string
-          description: Error name
-        message:
-          type: string
-          description: Error message
+  - url: https://go-project-278-jxjc.onrender.com/api
+  - url: http://dev.home:8080/api
 paths:
   /links:
     get:
@@ -74,6 +18,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LinkList"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     post:
       summary: New link
       description: Creates new link
@@ -176,3 +126,65 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+security:
+  - defaultApiKey: []
+components:
+  schemas:
+    LinkList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Link"
+    Link:
+      type: object
+      required:
+        - id
+        - original_url
+        - short_name
+        - short_url
+      properties:
+        id:
+          type: integer
+          description: Link id
+          example: 1
+        original_url:
+          type: string
+          description: Link url
+          example: "https://google.com"
+        short_name:
+          type: string
+          description: Link short url code
+          example: "ABC123"
+        short_url:
+          type: string
+          description: Link short url
+          example: "{server}/r/ABC123"
+    LinkParams:
+      type: object
+      required:
+        - original_url
+      properties:
+        original_url:
+          type: string
+          description: Link url
+          example: "https://google.com"
+        short_name:
+          type: string
+          description: Link code
+          example: "ABC123"
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error name
+        message:
+          type: string
+          description: Error message
+  securitySchemes:
+    defaultApiKey:
+      type: apiKey
+      name: api-key
+      in: header
