@@ -12,8 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const BASE_URL = "http://localhost"
-
 func TestPingRoute(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := setupRouter(makeConfig())
