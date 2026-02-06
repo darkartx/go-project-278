@@ -1,4 +1,4 @@
-MIGRATOR=go run main.go migrate
+MIGRATOR=goose -dir db/migrations/ -v postgres "$DATABASE_URL"
 
 help:
 	@echo "Available commands:"
@@ -9,16 +9,18 @@ tidy: ## Tidy up dependencies, format code, and run vet
 	go fmt ./...
 	go vet ./...
 
+dep-install: ## Install dependecy utils
+	go install github.com/pressly/goose/v3/cmd/goose@latest
+	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+
 dev: ## Run the API server in development mode
 	air s
 
 .PHONY: test
-test: ## Run all tests
-	go mod tidy
+test: tidy ## Run all tests
 	go test -v --race
 
-test_coverage: ## Run all tests with coverage
-	go mod tidy
+test_coverage: tidy ## Run all tests with coverage
 	go test -v -coverprofile=coverage.out --race
 
 install: ## Install app to system

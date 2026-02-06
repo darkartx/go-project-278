@@ -1,6 +1,7 @@
 package code
 
 import (
+	"code/handlers"
 	"net/http"
 
 	"github.com/gin-contrib/rollbar"
@@ -26,6 +27,11 @@ func Api(config *Config) error {
 
 	setupRollbar()
 	router := setupRouter(config)
+
+	api := router.Group("api")
+	links := api.Group("links")
+	linksHandler := handlers.NewLinkHandler()
+	linksHandler.Register(links)
 
 	return router.Run(":" + config.Port)
 }

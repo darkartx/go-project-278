@@ -1,0 +1,178 @@
+openapi: '3.0.3'
+info:
+  title: Url Shortener Api
+  version: '1.0'
+servers:
+  - url: http://localhost:8080/api/
+  - url: https://go-project-278-jxjc.onrender.com/api/
+  - url: http://dev.home:8080/api/
+components:
+  schemas:
+    LinkList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Link"
+    Link:
+      type: object
+      required:
+        - id
+        - original_url
+        - short_name
+        - short_url
+      properties:
+        id:
+          type: integer
+          description: Link id
+          example: 1
+        original_url:
+          type: string
+          description: Link url
+          example: "https://google.com"
+        short_name:
+          type: string
+          description: Link short url code
+          example: "ABC123"
+        short_url:
+          type: string
+          description: Link short url
+          example: "{server}/r/ABC123"
+    LinkParams:
+      type: object
+      required:
+        - original_url
+      properties:
+        original_url:
+          type: string
+          description: Link url
+          example: "https://google.com"
+        short_name:
+          type: string
+          description: Link code
+          example: "ABC123"
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error name
+        message:
+          type: string
+          description: Error message
+paths:
+  /links:
+    get:
+      summary: List of links
+      description: Returns list of links
+      operationId: GetLinks
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LinkList"
+    post:
+      summary: New link
+      description: Creates new link
+      operationId: CreateLink
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LinkParams"
+      responses:
+        '204':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Link"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /links/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    get:
+      summary: Link by id
+      description: Returns link by id
+      operationId: GetLink
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Link"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update link by id
+      description: Updates link by id
+      operationId: UpdateLink
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LinkParams"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Link"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Remove link by id
+      description: Removes link by id
+      operationId: RemoveLink
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
