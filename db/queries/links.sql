@@ -1,14 +1,14 @@
--- name: CreateArticle :one
-INSERT INTO articles (name) VALUES (:name) RETURNING *;
-
--- name: GetArticle :one
-SELECT * FROM articles WHERE id = ?;
-
 -- name: ListLinks :many
 SELECT * FROM links ORDER BY id;
 
--- name: UpdateArticle :one
-UPDATE articles SET name = :name WHERE id = :id RETURNING *;
+-- name: CreateLink :one
+INSERT INTO links (original_url, short_name) VALUES ($1, $2) RETURNING *;
 
--- name: DeleteArticle :exec
-DELETE FROM articles WHERE id = :id;
+-- name: GetLink :one
+SELECT * FROM links WHERE id = $1;
+
+-- name: UpdateLink :one
+UPDATE links SET original_url = $1, short_name = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING *;
+
+-- name: DeleteLink :exec
+DELETE FROM links WHERE id = $1;

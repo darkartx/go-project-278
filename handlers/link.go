@@ -2,12 +2,16 @@ package handlers
 
 import (
 	"code/internal"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/jackc/pgx/v5/pgconn"
+
+	db "code/db/generated"
 )
 
 const (
@@ -16,10 +20,11 @@ const (
 )
 
 type LinkHandler struct {
+	queries *db.Queries
 }
 
-func NewLinkHandler() *LinkHandler {
-	return &LinkHandler{}
+func NewLinkHandler(queries *db.Queries) *LinkHandler {
+	return &LinkHandler{queries: queries}
 }
 
 func (h *LinkHandler) Register(rg *gin.RouterGroup) {
@@ -31,25 +36,36 @@ func (h *LinkHandler) Register(rg *gin.RouterGroup) {
 }
 
 func (h *LinkHandler) List(c *gin.Context) {
-	baseUrl := getBaseUrl(c)
-
-	links := []Link{
-		{1, "http://google.com", "test", baseUrl + "/r/test"},
-		{2, "http://google.com", "test2", baseUrl + "/r/test2"},
+	links, err := h.queries.ListLinks(c)
+	if err != nil {
+		handleDbError(err, c)
+		return
 	}
 
-	c.JSON(http.StatusOK, links)
+	result := make([]Link, 0, len(links))
+
+	for _, item := range links {
+		result = append(
+			result,
+			Link{
+				Id:          uint64(item.ID),
+				OriginalUrl: item.OriginalUrl,
+				ShortName:   item.ShortName,
+				ShortUrl:    makeShortUrl(item.ShortName, c),
+			},
+		)
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 func (h *LinkHandler) Create(c *gin.Context) {
 	input, err := parseAndValidateParams(c)
 
 	if err != nil {
-		handleError(http.StatusBadRequest, err, c)
+		sendError(http.StatusBadRequest, err, c)
 		return
 	}
-
-	baseUrl := getBaseUrl(c)
 
 	var shortName string
 	if len(input.ShortName) > 0 {
@@ -58,39 +74,56 @@ func (h *LinkHandler) Create(c *gin.Context) {
 		shortName = internal.GenerateShortName(shortNameMin, shortNameMax)
 	}
 
-	shortUrl := fmt.Sprint(baseUrl, "/r/", shortName)
+	link, err := h.queries.CreateLink(c, db.CreateLinkParams{
+		OriginalUrl: input.OriginalUrl,
+		ShortName:   shortName,
+	})
 
-	c.JSON(http.StatusCreated, Link{1, input.OriginalUrl, shortName, shortUrl})
+	if err != nil {
+		handleLinkCreateError(err, c)
+		return
+	}
+
+	c.JSON(http.StatusCreated, Link{
+		Id:          uint64(link.ID),
+		OriginalUrl: link.OriginalUrl,
+		ShortName:   link.ShortName,
+		ShortUrl:    makeShortUrl(link.ShortName, c),
+	})
 }
 
 func (h *LinkHandler) Get(c *gin.Context) {
 	id, err := parseId(c)
 
 	if err != nil {
-		handleError(http.StatusBadRequest, err, c)
+		sendError(http.StatusBadRequest, err, c)
 		return
 	}
 
-	baseUrl := getBaseUrl(c)
+	var link db.Link
+	if link, err = h.queries.GetLink(c, int64(id)); err != nil {
+		handleDbError(err, c)
+		return
+	}
 
-	c.JSON(http.StatusOK, Link{id, "https://google.com", "test", baseUrl + "/r/test"})
+	c.JSON(http.StatusOK, Link{uint64(link.ID), link.OriginalUrl, link.ShortName, makeShortUrl(link.ShortName, c)})
 }
 
 func (h *LinkHandler) Update(c *gin.Context) {
-	var input LinkParams
-
 	id, err := parseId(c)
 
-	if err == nil {
-		input, err = parseAndValidateParams(c)
-	}
-
 	if err != nil {
-		handleError(http.StatusBadRequest, err, c)
+		sendError(http.StatusBadRequest, err, c)
 		return
 	}
 
-	baseUrl := getBaseUrl(c)
+	var input LinkParams
+	input, err = parseAndValidateParams(c)
+
+	if err != nil {
+		sendError(http.StatusUnprocessableEntity, err, c)
+		return
+	}
 
 	var shortName string
 	if len(input.ShortName) > 0 {
@@ -99,16 +132,21 @@ func (h *LinkHandler) Update(c *gin.Context) {
 		shortName = internal.GenerateShortName(shortNameMin, shortNameMax)
 	}
 
-	shortUrl := fmt.Sprint(baseUrl, "/r/", shortName)
+	var link db.Link
+	link, err = h.queries.UpdateLink(c, db.UpdateLinkParams{ID: int64(id), OriginalUrl: input.OriginalUrl, ShortName: shortName})
+	if err != nil {
+		handleDbError(err, c)
+		return
+	}
 
-	c.JSON(http.StatusOK, Link{id, input.OriginalUrl, shortName, shortUrl})
+	c.JSON(http.StatusOK, Link{id, link.OriginalUrl, link.ShortName, makeShortUrl(link.ShortName, c)})
 }
 
 func (h *LinkHandler) Delete(c *gin.Context) {
 	_, err := parseId(c)
 
 	if err != nil {
-		handleError(http.StatusBadRequest, err, c)
+		sendError(http.StatusBadRequest, err, c)
 		return
 	}
 
@@ -146,13 +184,6 @@ func parseId(c *gin.Context) (uint64, error) {
 	return id, nil
 }
 
-func handleError(code int, err error, c *gin.Context) {
-	c.JSON(code, Error{
-		Error:   http.StatusText(code),
-		Message: err.Error(),
-	})
-}
-
 func getBaseUrl(c *gin.Context) string {
 	scheme := "http"
 
@@ -163,4 +194,22 @@ func getBaseUrl(c *gin.Context) string {
 	}
 
 	return fmt.Sprintf("%s://%s", scheme, c.Request.Host)
+}
+
+func makeShortUrl(shortName string, c *gin.Context) string {
+	baseUrl := getBaseUrl(c)
+	return fmt.Sprint(baseUrl, "/r/", shortName)
+}
+
+func handleLinkCreateError(err error, c *gin.Context) {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		// Unique constraint
+		if pgErr.Code == "23505" {
+			sendError(http.StatusUnprocessableEntity, ErrorShortNameAlreadyUsed, c)
+			return
+		}
+	}
+
+	handleDbError(err, c)
 }

@@ -1,14 +1,56 @@
 package handlers
 
-import "errors"
+import (
+	"database/sql"
+	"errors"
+	"net/http"
 
-var (
-	ErrorInvalidOriginalUrl = errors.New("invalid original url")
-	ErrorInvalidId          = errors.New("invalid id")
-	ErrorInvalidShortName   = errors.New("invalid short name")
+	"github.com/gin-gonic/gin"
 )
 
-type Error struct {
-	Error   string `json:"error"`
-	Message string `json:"message"`
+var (
+	ErrorInvalidOriginalUrl   = errors.New("invalid original url")
+	ErrorInvalidId            = errors.New("invalid id")
+	ErrorInvalidShortName     = errors.New("invalid short name")
+	ErrorShortNameAlreadyUsed = errors.New("short name is already used")
+)
+
+func sendError(code int, err error, c *gin.Context) {
+	message := ""
+
+	if err != nil {
+		message = err.Error()
+	}
+
+	c.JSON(code, Error{
+		Error:   http.StatusText(code),
+		Message: message,
+	})
+}
+
+func handleDbError(err error, c *gin.Context) {
+	if err == nil {
+		return
+	}
+
+	if errors.Is(err, sql.ErrNoRows) {
+		sendNotFound(c)
+		return
+	}
+
+	sendServerError(c)
+}
+
+func sendNotFound(c *gin.Context) {
+	c.JSON(http.StatusNotFound, Error{
+		Error:   http.StatusText(http.StatusNotFound),
+		Message: "Not found",
+	})
+}
+
+func sendServerError(c *gin.Context) {
+	c.JSON(http.StatusInternalServerError, Error{
+		Error:   http.StatusText(http.StatusInternalServerError),
+		Message: "Something went wrong",
+	})
 }

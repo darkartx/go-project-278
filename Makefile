@@ -45,7 +45,7 @@ db-status: ## Show database migration status
 	$(MIGRATOR) status
 
 db-generate: ## Generate database code using sqlc
-	docker run --rm -v $(shell pwd):/src -w /src sqlc/sqlc generate
+	sqlc generate
 
 docker-build:
 	docker build -t url_shortener \

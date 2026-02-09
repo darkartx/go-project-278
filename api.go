@@ -1,11 +1,14 @@
 package code
 
 import (
+	db "code/db/generated"
 	"code/handlers"
+	"database/sql"
 	"net/http"
 
 	"github.com/gin-contrib/rollbar"
 	"github.com/gin-gonic/gin"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type Config struct {
@@ -25,7 +28,16 @@ func Api(config *Config) error {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	router := setupRouter(config)
+	database, err := setupDB(config)
+	if err != nil {
+		return err
+	}
+
+	defer database.Close()
+
+	queries := db.New(database)
+	router := setupRouter(queries, config)
+
 	if setupRollbar() {
 		router.Use(rollbar.Recovery(true))
 	}
@@ -33,7 +45,7 @@ func Api(config *Config) error {
 	return router.Run(":" + config.Port)
 }
 
-func setupRouter(config *Config) *gin.Engine {
+func setupRouter(queries *db.Queries, config *Config) *gin.Engine {
 	router := gin.Default()
 
 	router.GET("/ping", func(c *gin.Context) {
@@ -42,8 +54,22 @@ func setupRouter(config *Config) *gin.Engine {
 
 	api := router.Group("api")
 	links := api.Group("links")
-	linksHandler := handlers.NewLinkHandler()
+	linksHandler := handlers.NewLinkHandler(queries)
 	linksHandler.Register(links)
 
 	return router
+}
+
+func setupDB(config *Config) (*sql.DB, error) {
+	db, err := sql.Open("pgx", config.DatabaseUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Ping(); err != nil {
+		db.Close()
+		return nil, err
+	}
+
+	return db, nil
 }
