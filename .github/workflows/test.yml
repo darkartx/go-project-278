@@ -12,6 +12,17 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: go-project-278
+          POSTGRES_PASSWORD: go-project-278
+          POSTGRES_DB: go-project-278
+        ports:
+          - 5432:5432
+    env:
+      DATABASE_URL: postgres://go-project-278:go-project-278@localhost:5432/go-project-278
     steps:
     - uses: actions/checkout@v4
 

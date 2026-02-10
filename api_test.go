@@ -336,16 +336,41 @@ func TestLinksUpdateWithInvalidShortName(t *testing.T) {
 	assert.JSONEq(t, expected, w.Body.String())
 }
 
-func TestLinksDelete(t *testing.T) {
+func TestLinksUpdateWithNotExistingId(t *testing.T) {
 	router := setupTestRouter()
 
-	req, _ := http.NewRequest("DELETE", "http://localhost/api/links/1", nil)
+	body := `{"original_url":"https://google.com","short_name":"testtest"}`
+	req, _ := http.NewRequest("PUT", "http://localhost/api/links/1", bytes.NewBufferString(body))
 
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusNoContent, w.Code)
-	assert.Equal(t, "", w.Body.String())
+	assert.Equal(t, http.StatusNotFound, w.Code)
+
+	expected := `{"error":"Not Found","message":"Not found"}`
+	assert.JSONEq(t, expected, w.Body.String())
+}
+
+func TestLinksDelete(t *testing.T) {
+	withTx(t, func(ctx context.Context, q *db.Queries, tx *sql.Tx) {
+		router := setupTestRouterWithQueries(q)
+
+		link, err := q.CreateLink(ctx, db.CreateLinkParams{OriginalUrl: "http://localhost/", ShortName: "123ABC"})
+		if err != nil {
+			t.Fatalf("create link: %v", err)
+		}
+
+		req, _ := http.NewRequest("DELETE", fmt.Sprint("http://localhost/api/links/", link.ID), nil)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusNoContent, w.Code)
+		assert.Equal(t, "", w.Body.String())
+
+		_, err = q.GetLink(ctx, link.ID)
+		assert.ErrorIs(t, err, sql.ErrNoRows)
+	})
 }
 
 func TestLinksDeleteWithInvalidId(t *testing.T) {
@@ -359,6 +384,20 @@ func TestLinksDeleteWithInvalidId(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 
 	expected := `{"error":"Bad Request","message":"invalid id"}`
+	assert.JSONEq(t, expected, w.Body.String())
+}
+
+func TestLinksDeleteWithNotExistingId(t *testing.T) {
+	router := setupTestRouter()
+
+	req, _ := http.NewRequest("DELETE", "http://localhost/api/links/1", nil)
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+
+	expected := `{"error":"Not Found","message":"Not found"}`
 	assert.JSONEq(t, expected, w.Body.String())
 }
 

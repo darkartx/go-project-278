@@ -143,10 +143,20 @@ func (h *LinkHandler) Update(c *gin.Context) {
 }
 
 func (h *LinkHandler) Delete(c *gin.Context) {
-	_, err := parseId(c)
+	id, err := parseId(c)
 
 	if err != nil {
 		sendError(http.StatusBadRequest, err, c)
+		return
+	}
+
+	if _, err = h.queries.GetLink(c, int64(id)); err != nil {
+		handleDbError(err, c)
+		return
+	}
+
+	if err = h.queries.DeleteLink(c, int64(id)); err != nil {
+		handleDbError(err, c)
 		return
 	}
 
