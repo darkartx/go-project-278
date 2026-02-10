@@ -33,7 +33,9 @@ func Api(config *Config) error {
 		return err
 	}
 
-	defer database.Close()
+	defer func() {
+		_ = database.Close()
+	}()
 
 	queries := db.New(database)
 	router := setupRouter(queries, config)
@@ -67,7 +69,7 @@ func setupDB(config *Config) (*sql.DB, error) {
 	}
 
 	if err := db.Ping(); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 

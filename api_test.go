@@ -411,7 +411,9 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("open db: %v", err)
 	}
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	ctxPing, cancel := context.WithTimeout(ctx, 10*time.Second)
 	if err := conn.PingContext(ctxPing); err != nil {

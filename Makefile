@@ -27,7 +27,7 @@ install: ## Install app to system
 	go install
 
 lint: ## Lint code
-	golangci-lint run cmd/url_shortener
+	golangci-lint run .
 
 build: ## Build app
 	go build -ldflags="-X code.commitHash=$(git rev-parse HEAD)" -o bin/url_shortener ./cmd/url_shortener
