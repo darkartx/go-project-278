@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var rangeRegex *regexp.Regexp = regexp.MustCompile("^\\[(\\d+),\\s*(\\d+)\\]$")
+var rangeRegex *regexp.Regexp = regexp.MustCompile(`^\[(\d+),\s*(\d+)\]$`)
 
 type RangeParam struct {
 	Start int
