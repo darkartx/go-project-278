@@ -13,6 +13,7 @@ var (
 	ErrorInvalidId            = errors.New("invalid id")
 	ErrorInvalidShortName     = errors.New("invalid short name")
 	ErrorShortNameAlreadyUsed = errors.New("short name is already used")
+	ErrorInvalidRange         = errors.New("invalid range param")
 )
 
 func sendError(code int, err error, c *gin.Context) {

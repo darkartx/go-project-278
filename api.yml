@@ -11,6 +11,14 @@ paths:
       summary: List of links
       description: Returns list of links
       operationId: GetLinks
+      parameters:
+        - name: range
+          in: query
+          required: false
+          description: Range in format [start, end]
+          schema:
+            type: string
+            example: "[0, 10]"
       responses:
         '200':
           description: OK

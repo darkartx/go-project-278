@@ -30,13 +30,35 @@ func NewLinkHandler(queries *db.Queries) *LinkHandler {
 func (h *LinkHandler) Register(rg *gin.RouterGroup) {
 	rg.POST("", h.Create)
 	rg.GET("/:id", h.Get)
-	rg.GET("", h.List)
+	rg.GET("", Range(RangeParam{0, 9}), h.List)
 	rg.PUT("/:id", h.Update)
 	rg.DELETE("/:id", h.Delete)
 }
 
 func (h *LinkHandler) List(c *gin.Context) {
-	links, err := h.queries.ListLinks(c)
+	param, exists := c.Get("range")
+	if !exists {
+		param = RangeParam{0, 9}
+	}
+
+	rangeParam := param.(RangeParam)
+
+	var linksCount int64
+	var links []db.Link
+	var err error
+
+	linksCount, err = h.queries.GetLinkCount(c)
+	if err != nil {
+		handleDbError(err, c)
+		return
+	}
+
+	limit := rangeParam.End - rangeParam.Start + 1
+
+	links, err = h.queries.ListLinks(c, db.ListLinksParams{
+		Limit:  int32(limit),
+		Offset: int32(rangeParam.Start),
+	})
 	if err != nil {
 		handleDbError(err, c)
 		return
@@ -56,6 +78,7 @@ func (h *LinkHandler) List(c *gin.Context) {
 		)
 	}
 
+	c.Header("Content-Range", fmt.Sprintf("links %d-%d/%d", rangeParam.Start, rangeParam.End, linksCount))
 	c.JSON(http.StatusOK, result)
 }
 

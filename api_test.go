@@ -42,26 +42,18 @@ func TestLinksList(t *testing.T) {
 	withTx(t, func(ctx context.Context, q *db.Queries, tx *sql.Tx) {
 		router := setupTestRouterWithQueries(q)
 
-		var link1 db.Link
-		var link2 db.Link
 		var err error
+		var links [2]db.Link
 
-		link1, err = q.CreateLink(ctx, db.CreateLinkParams{
-			OriginalUrl: "https://google.com",
-			ShortName:   "test",
-		})
+		for i := 0; i < 2; i++ {
+			links[i], err = q.CreateLink(ctx, db.CreateLinkParams{
+				OriginalUrl: "https://google.com",
+				ShortName:   fmt.Sprintf("test%d", i),
+			})
 
-		if err != nil {
-			t.Fatalf("create link: %v", err)
-		}
-
-		link2, err = q.CreateLink(ctx, db.CreateLinkParams{
-			OriginalUrl: "https://google.com",
-			ShortName:   "test2",
-		})
-
-		if err != nil {
-			t.Fatalf("create link: %v", err)
+			if err != nil {
+				t.Fatalf("create link: %v", err)
+			}
 		}
 
 		req, _ := http.NewRequest("GET", "http://localhost/api/links", nil)
@@ -70,15 +62,102 @@ func TestLinksList(t *testing.T) {
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, "links 0-9/2", w.Header().Get("Content-Range"))
 
 		expectedLinks := []handlers.Link{
-			{Id: uint64(link1.ID), OriginalUrl: "https://google.com", ShortName: "test", ShortUrl: "http://localhost/r/test"},
-			{Id: uint64(link2.ID), OriginalUrl: "https://google.com", ShortName: "test2", ShortUrl: "http://localhost/r/test2"},
+			{Id: uint64(links[0].ID), OriginalUrl: "https://google.com", ShortName: "test0", ShortUrl: "http://localhost/r/test0"},
+			{Id: uint64(links[1].ID), OriginalUrl: "https://google.com", ShortName: "test1", ShortUrl: "http://localhost/r/test1"},
 		}
 		var actualLinks []handlers.Link
 		err = json.Unmarshal(w.Body.Bytes(), &actualLinks)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedLinks, actualLinks)
+	})
+}
+
+func TestLinksListWithPagination(t *testing.T) {
+	withTx(t, func(ctx context.Context, q *db.Queries, tx *sql.Tx) {
+		router := setupTestRouterWithQueries(q)
+
+		var err error
+		var links [20]db.Link
+
+		for i := 0; i < 20; i++ {
+			links[i], err = q.CreateLink(ctx, db.CreateLinkParams{
+				OriginalUrl: "https://google.com",
+				ShortName:   fmt.Sprintf("test%d", i),
+			})
+
+			if err != nil {
+				t.Fatalf("create link: %v", err)
+			}
+		}
+
+		req, _ := http.NewRequest("GET", "http://localhost/api/links?range=[5,10]", nil)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, "links 5-10/20", w.Header().Get("Content-Range"))
+
+		expectedLinks := make([]handlers.Link, 0, 6)
+
+		for _, link := range links[5:11] {
+			expectedLinks = append(
+				expectedLinks,
+				handlers.Link{
+					Id:          uint64(link.ID),
+					OriginalUrl: "https://google.com",
+					ShortName:   link.ShortName,
+					ShortUrl:    fmt.Sprintf("http://localhost/r/%s", link.ShortName),
+				},
+			)
+		}
+
+		var actualLinks []handlers.Link
+		err = json.Unmarshal(w.Body.Bytes(), &actualLinks)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedLinks, actualLinks)
+	})
+}
+
+func TestLinksListWithInvalidPagination(t *testing.T) {
+	withTx(t, func(ctx context.Context, q *db.Queries, tx *sql.Tx) {
+		router := setupTestRouterWithQueries(q)
+
+		var err error
+		var links [2]db.Link
+
+		for i := 0; i < 2; i++ {
+			links[i], err = q.CreateLink(ctx, db.CreateLinkParams{
+				OriginalUrl: "https://google.com",
+				ShortName:   fmt.Sprintf("test%d", i),
+			})
+
+			if err != nil {
+				t.Fatalf("create link: %v", err)
+			}
+		}
+
+		cases := []string{
+			"[abc,10]",
+			"[-1,10]",
+			"[20,10]",
+			"asdasd",
+		}
+
+		for _, caseItem := range cases {
+			req, _ := http.NewRequest("GET", fmt.Sprintf("http://localhost/api/links?range=%s", caseItem), nil)
+
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, http.StatusBadRequest, w.Code)
+
+			expected := `{"error":"Bad Request","message":"invalid range param"}`
+			assert.JSONEq(t, expected, w.Body.String())
+		}
 	})
 }
 

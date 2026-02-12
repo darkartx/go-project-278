@@ -57,12 +57,28 @@ func (q *Queries) GetLink(ctx context.Context, id int64) (Link, error) {
 	return i, err
 }
 
-const listLinks = `-- name: ListLinks :many
-SELECT id, original_url, short_name, created_at, updated_at FROM links ORDER BY id
+const getLinkCount = `-- name: GetLinkCount :one
+SELECT COUNT(*) FROM links
 `
 
-func (q *Queries) ListLinks(ctx context.Context) ([]Link, error) {
-	rows, err := q.db.QueryContext(ctx, listLinks)
+func (q *Queries) GetLinkCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getLinkCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const listLinks = `-- name: ListLinks :many
+SELECT id, original_url, short_name, created_at, updated_at FROM links ORDER BY id LIMIT $1 OFFSET $2
+`
+
+type ListLinksParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) ListLinks(ctx context.Context, arg ListLinksParams) ([]Link, error) {
+	rows, err := q.db.QueryContext(ctx, listLinks, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
