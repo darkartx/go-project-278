@@ -218,6 +218,12 @@ func parseId(c *gin.Context) (uint64, error) {
 }
 
 func getBaseUrl(c *gin.Context) string {
+	result := c.Request.Header.Get("Referer")
+
+	if result != "" {
+		return result
+	}
+
 	scheme := "http"
 
 	if c.Request.Header.Get("X-Forwarded-Proto") == "https" {
@@ -226,12 +232,12 @@ func getBaseUrl(c *gin.Context) string {
 		scheme = "https"
 	}
 
-	return fmt.Sprintf("%s://%s", scheme, c.Request.Host)
+	return fmt.Sprintf("%s://%s/", scheme, c.Request.Host)
 }
 
 func makeShortUrl(shortName string, c *gin.Context) string {
 	baseUrl := getBaseUrl(c)
-	return fmt.Sprint(baseUrl, "/r/", shortName)
+	return fmt.Sprint(baseUrl, "r/", shortName)
 }
 
 func handleLinkCreateError(err error, c *gin.Context) {

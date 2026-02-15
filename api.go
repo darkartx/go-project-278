@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/rollbar"
 	"github.com/gin-gonic/gin"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -49,6 +50,12 @@ func Api(config *Config) error {
 
 func setupRouter(queries *db.Queries, config *Config) *gin.Engine {
 	router := gin.Default()
+
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = []string{"http://93.0.1.1:5173"}
+	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
+
+	router.Use(cors.New(corsConfig))
 
 	router.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
