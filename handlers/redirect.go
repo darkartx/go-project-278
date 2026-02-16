@@ -1,9 +1,7 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -33,13 +31,5 @@ func (h *RedirectHandler) Get(c *gin.Context) {
 	}
 
 	c.Set("link", link)
-	// c.Redirect(http.StatusTemporaryRedirect, link.OriginalUrl)
-
-	var b strings.Builder
-
-	for key, value := range c.Request.Header {
-		fmt.Fprintf(&b, "%s => %v\n", key, value)
-	}
-
-	c.String(http.StatusOK, b.String())
+	c.Redirect(http.StatusTemporaryRedirect, link.OriginalUrl)
 }

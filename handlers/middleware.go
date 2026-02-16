@@ -80,7 +80,7 @@ func RecordVisit(queries *db.Queries) gin.HandlerFunc {
 		}
 
 		linkId := link.(db.Link).ID
-		ip := getClientIpByHeader(c)
+		ip := c.ClientIP()
 		userAgent := c.Request.UserAgent()
 		referer := c.Request.Header.Get("Referer")
 		status := c.Writer.Status()
@@ -97,22 +97,4 @@ func RecordVisit(queries *db.Queries) gin.HandlerFunc {
 			handleDbError(err, c)
 		}
 	}
-}
-
-func getClientIpByHeader(c *gin.Context) string {
-	headers := [3]string{
-		"X-Forwarded-For",
-		"x-forwarded-for",
-		"X-FORWARDED-FOR",
-	}
-	var result string
-
-	for _, header := range headers {
-		result = c.Request.Header.Get(header)
-		if result != "" {
-			return result
-		}
-	}
-
-	return c.ClientIP()
 }
