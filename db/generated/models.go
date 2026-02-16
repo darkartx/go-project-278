@@ -5,6 +5,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -14,4 +15,14 @@ type Link struct {
 	ShortName   string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+type Visit struct {
+	ID        int64
+	LinkID    int64
+	Ip        sql.NullString
+	UserAgent sql.NullString
+	Referer   sql.NullString
+	Status    int16
+	CreatedAt time.Time
 }

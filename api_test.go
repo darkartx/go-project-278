@@ -480,6 +480,219 @@ func TestLinksDeleteWithNotExistingId(t *testing.T) {
 	assert.JSONEq(t, expected, w.Body.String())
 }
 
+func TestLinkVisitsList(t *testing.T) {
+	withTx(t, func(ctx context.Context, q *db.Queries, tx *sql.Tx) {
+		router := setupTestRouterWithQueries(q)
+
+		var err error
+		var visits [2]db.Visit
+		link, err := q.CreateLink(ctx, db.CreateLinkParams{
+			OriginalUrl: "https://google.com",
+			ShortName:   "ABC123",
+		})
+
+		if err != nil {
+			t.Fatalf("create link: %v", err)
+		}
+
+		for i := 0; i < 2; i++ {
+			visits[i], err = q.CreateVisit(ctx, db.CreateVisitParams{
+				LinkID:    link.ID,
+				Ip:        sql.NullString{String: "10.0.0.1", Valid: true},
+				UserAgent: sql.NullString{String: "UserAgent", Valid: true},
+				Referer:   sql.NullString{String: "http://localhost/", Valid: true},
+				Status:    302,
+			})
+
+			if err != nil {
+				t.Fatalf("create link visit: %v", err)
+			}
+		}
+
+		req, _ := http.NewRequest("GET", "http://localhost/api/link_visits", nil)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, "visits 0-9/2", w.Header().Get("Content-Range"))
+
+		expectedVisits := []handlers.Visit{
+			{Id: uint64(visits[0].ID), Ip: visits[0].Ip.String, LinkId: uint64(link.ID), UserAgent: visits[0].UserAgent.String, Status: 302, CreatedAt: visits[0].CreatedAt},
+			{Id: uint64(visits[1].ID), Ip: visits[1].Ip.String, LinkId: uint64(link.ID), UserAgent: visits[1].UserAgent.String, Status: 302, CreatedAt: visits[1].CreatedAt},
+		}
+		var actualVisits []handlers.Visit
+		err = json.Unmarshal(w.Body.Bytes(), &actualVisits)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedVisits, actualVisits)
+	})
+}
+
+func TestLinkVistsListWithPagination(t *testing.T) {
+	withTx(t, func(ctx context.Context, q *db.Queries, tx *sql.Tx) {
+		router := setupTestRouterWithQueries(q)
+
+		var err error
+		var visits [20]db.Visit
+		link, err := q.CreateLink(ctx, db.CreateLinkParams{
+			OriginalUrl: "https://google.com",
+			ShortName:   "ABC123",
+		})
+
+		if err != nil {
+			t.Fatalf("create link: %v", err)
+		}
+
+		for i := 0; i < 20; i++ {
+			visits[i], err = q.CreateVisit(ctx, db.CreateVisitParams{
+				LinkID:    link.ID,
+				Ip:        sql.NullString{String: "10.0.0.1", Valid: true},
+				UserAgent: sql.NullString{String: "UserAgent", Valid: true},
+				Referer:   sql.NullString{String: "http://localhost/", Valid: true},
+				Status:    302,
+			})
+
+			if err != nil {
+				t.Fatalf("create link visit: %v", err)
+			}
+		}
+
+		req, _ := http.NewRequest("GET", "http://localhost/api/link_visits?range=[5,10]", nil)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, "visits 5-10/20", w.Header().Get("Content-Range"))
+
+		expectedVisits := make([]handlers.Visit, 0, 6)
+
+		for _, visit := range visits[5:11] {
+			expectedVisits = append(
+				expectedVisits,
+				handlers.Visit{
+					Id:        uint64(visit.ID),
+					Ip:        visit.Ip.String,
+					LinkId:    uint64(link.ID),
+					UserAgent: visit.UserAgent.String,
+					Status:    302,
+					CreatedAt: visit.CreatedAt,
+				},
+			)
+		}
+
+		var actualVisits []handlers.Visit
+		err = json.Unmarshal(w.Body.Bytes(), &actualVisits)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedVisits, actualVisits)
+	})
+}
+
+func TestLinkVisitsListWithInvalidPagination(t *testing.T) {
+	withTx(t, func(ctx context.Context, q *db.Queries, tx *sql.Tx) {
+		router := setupTestRouterWithQueries(q)
+
+		var err error
+		var visits [2]db.Visit
+		link, err := q.CreateLink(ctx, db.CreateLinkParams{
+			OriginalUrl: "https://google.com",
+			ShortName:   "ABC123",
+		})
+
+		if err != nil {
+			t.Fatalf("create link: %v", err)
+		}
+
+		for i := 0; i < 2; i++ {
+			visits[i], err = q.CreateVisit(ctx, db.CreateVisitParams{
+				LinkID:    link.ID,
+				Ip:        sql.NullString{String: "10.0.0.1", Valid: true},
+				UserAgent: sql.NullString{String: "UserAgent", Valid: true},
+				Referer:   sql.NullString{String: "http://localhost/", Valid: true},
+				Status:    302,
+			})
+
+			if err != nil {
+				t.Fatalf("create link visit: %v", err)
+			}
+		}
+
+		cases := []string{
+			"[abc,10]",
+			"[-1,10]",
+			"[20,10]",
+			"asdasd",
+		}
+
+		for _, caseItem := range cases {
+			req, _ := http.NewRequest("GET", fmt.Sprintf("http://localhost/api/link_visits?range=%s", caseItem), nil)
+
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, http.StatusBadRequest, w.Code)
+
+			expected := `{"error":"Bad Request","message":"invalid range param"}`
+			assert.JSONEq(t, expected, w.Body.String())
+		}
+	})
+}
+
+func TestRedirect(t *testing.T) {
+	withTx(t, func(ctx context.Context, q *db.Queries, tx *sql.Tx) {
+		router := setupTestRouterWithQueries(q)
+
+		link, err := q.CreateLink(ctx, db.CreateLinkParams{
+			OriginalUrl: "https://google.com",
+			ShortName:   "ABC123",
+		})
+
+		if err != nil {
+			t.Fatalf("create link: %v", err)
+		}
+
+		req, _ := http.NewRequest("GET", "http://localhost/r/ABC123", nil)
+		req.Header.Add("X-Forwarded-For", "10.0.0.1")
+		req.Header.Add("User-Agent", "Test")
+		req.Header.Add("Referer", "http://localhost/")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusTemporaryRedirect, w.Code)
+		assert.Equal(t, "https://google.com", w.Header().Get("Location"))
+
+		visits, err := q.ListVisits(ctx, db.ListVisitsParams{Limit: 1, Offset: 0})
+
+		if err != nil {
+			t.Fatalf("list visits: %v", err)
+		}
+
+		assert.Equal(t, len(visits), 1)
+
+		visit := visits[0]
+
+		assert.Equal(t, visit.LinkID, link.ID)
+		assert.Equal(t, visit.Ip.String, "10.0.0.1")
+		assert.Equal(t, visit.UserAgent.String, "Test")
+		assert.Equal(t, visit.Referer.String, "http://localhost/")
+		assert.Equal(t, int(visit.Status), http.StatusTemporaryRedirect)
+	})
+}
+
+func TestRedirectWithNotExistsCode(t *testing.T) {
+	router := setupTestRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "http://localhost/r/ABC123", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+
+	expected := `{"error":"Not Found","message":"Not found"}`
+	assert.JSONEq(t, expected, w.Body.String())
+}
+
 func TestMain(m *testing.M) {
 	ctx := context.Background()
 	var err error

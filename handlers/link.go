@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 
 	db "code/db/generated"
@@ -208,43 +208,11 @@ func parseAndValidateParams(c *gin.Context) (LinkParams, error) {
 	return params, nil
 }
 
-func parseId(c *gin.Context) (uint64, error) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil || id <= 0 {
-		return 0, ErrorInvalidId
-	}
-
-	return id, nil
-}
-
-func getBaseUrl(c *gin.Context) string {
-	result := c.Request.Header.Get("Referer")
-
-	if result != "" {
-		return result
-	}
-
-	scheme := "http"
-
-	if c.Request.Header.Get("X-Forwarded-Proto") == "https" {
-		scheme = "https"
-	} else if c.Request.TLS != nil {
-		scheme = "https"
-	}
-
-	return fmt.Sprintf("%s://%s/", scheme, c.Request.Host)
-}
-
-func makeShortUrl(shortName string, c *gin.Context) string {
-	baseUrl := getBaseUrl(c)
-	return fmt.Sprint(baseUrl, "r/", shortName)
-}
-
 func handleLinkCreateError(err error, c *gin.Context) {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		// Unique constraint
-		if pgErr.Code == "23505" {
+		if pgErr.Code == pgerrcode.UniqueViolation {
 			sendError(http.StatusUnprocessableEntity, ErrorShortNameAlreadyUsed, c)
 			return
 		}

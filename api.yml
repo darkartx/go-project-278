@@ -134,6 +134,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /link_visits:
+    get:
+      summary: List of link visits
+      description: Returns list of link visits
+      operationId: GetLinkVisits
+      parameters:
+        - name: range
+          in: query
+          required: false
+          description: Range in format [start, end]
+          schema:
+            type: string
+            example: "[0, 10]"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LinkVisitList"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 security:
   - defaultApiKey: []
 components:
@@ -181,6 +207,44 @@ components:
           example: "ABC123"
           maxLength: 50
           minLength: 6
+    LinkVisitList:
+      type: array
+      items:
+        $ref: "#/components/schemas/LinkVisit"
+    LinkVisit:
+      type: object
+      required:
+        - id
+        - link_id
+        - ip
+        - user_agent
+        - status
+        - created_at
+      properties:
+        id:
+          type: integer
+          description: Link visit id
+          example: 1
+        link_id:
+          type: integer
+          description: Link id
+          example: 1
+        ip:
+          type: string
+          description: Visiter ip
+          example: 10.0.0.1
+        user_agent:
+          type: string
+          description: Visiter user agent
+          example: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0
+        status:
+          type: integer
+          description: Request status
+          example: 302
+        created_at:
+          type: string
+          description: Visit create time
+          example: ""
     Error:
       type: object
       required:

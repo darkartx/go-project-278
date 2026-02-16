@@ -1,5 +1,7 @@
 package handlers
 
+import "time"
+
 type Link struct {
 	Id          uint64 `json:"id"`
 	OriginalUrl string `json:"original_url"`
@@ -15,4 +17,13 @@ type LinkParams struct {
 type Error struct {
 	Error   string `json:"error"`
 	Message string `json:"message,omitempty"`
+}
+
+type Visit struct {
+	Id        uint64    `json:"id"`
+	LinkId    uint64    `json:"link_id"`
+	Ip        string    `json:"ip"`
+	UserAgent string    `json:"user_agent"`
+	Status    int       `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
 }

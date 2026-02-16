@@ -1,4 +1,4 @@
-MIGRATOR=goose -dir db/migrations/ -v postgres "$DATABASE_URL"
+MIGRATOR=goose -dir db/migrations/ -v postgres "${DATABASE_URL}"
 
 help:
 	@echo "Available commands:"

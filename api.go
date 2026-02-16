@@ -52,9 +52,10 @@ func setupRouter(queries *db.Queries, config *Config) *gin.Engine {
 	router := gin.Default()
 
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"http://93.0.1.1:5173"}
+	corsConfig.AllowOrigins = []string{"http://127.0.0.1:5173"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
 
+	router.TrustedPlatform = gin.PlatformCloudflare
 	router.Use(cors.New(corsConfig))
 
 	router.GET("/ping", func(c *gin.Context) {
@@ -65,6 +66,13 @@ func setupRouter(queries *db.Queries, config *Config) *gin.Engine {
 	links := api.Group("links")
 	linksHandler := handlers.NewLinkHandler(queries)
 	linksHandler.Register(links)
+
+	linkVisits := api.Group("link_visits")
+	linkVisitsHandler := handlers.NewLinkVisitHandler(queries)
+	linkVisitsHandler.Register(linkVisits)
+
+	redirectHandler := handlers.NewRedirectHandler(queries)
+	redirectHandler.Register(router)
 
 	return router
 }
