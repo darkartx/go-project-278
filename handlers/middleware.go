@@ -3,7 +3,6 @@ package handlers
 import (
 	db "code/db/generated"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -86,7 +85,7 @@ func RecordVisit(queries *db.Queries) gin.HandlerFunc {
 		referer := c.Request.Header.Get("Referer")
 		status := c.Writer.Status()
 
-		visit, err := queries.CreateVisit(c, db.CreateVisitParams{
+		_, err := queries.CreateVisit(c, db.CreateVisitParams{
 			LinkID:    linkId,
 			Ip:        sql.NullString{String: ip, Valid: ip != ""},
 			UserAgent: sql.NullString{String: userAgent, Valid: userAgent != ""},
@@ -97,9 +96,6 @@ func RecordVisit(queries *db.Queries) gin.HandlerFunc {
 		if err != nil {
 			handleDbError(err, c)
 		}
-
-		fmt.Println("~~~~~~~~~~~~~~~~~~~~~~")
-		fmt.Printf("%v\n", visit)
 	}
 }
 
