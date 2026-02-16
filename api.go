@@ -40,6 +40,7 @@ func Api(config *Config) error {
 
 	queries := db.New(database)
 	router := setupRouter(queries, config)
+	router.TrustedPlatform = gin.PlatformCloudflare
 
 	if setupRollbar() {
 		router.Use(rollbar.Recovery(true))
@@ -55,7 +56,6 @@ func setupRouter(queries *db.Queries, config *Config) *gin.Engine {
 	corsConfig.AllowOrigins = []string{"http://127.0.0.1:5173"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
 
-	router.TrustedPlatform = gin.PlatformCloudflare
 	router.Use(cors.New(corsConfig))
 
 	router.GET("/ping", func(c *gin.Context) {

@@ -31,5 +31,5 @@ func (h *RedirectHandler) Get(c *gin.Context) {
 	}
 
 	c.Set("link", link)
-	c.Redirect(http.StatusTemporaryRedirect, link.OriginalUrl)
+	c.Redirect(http.StatusFound, link.OriginalUrl)
 }
