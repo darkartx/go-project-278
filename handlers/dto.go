@@ -24,6 +24,7 @@ type Visit struct {
 	LinkId    uint64    `json:"link_id"`
 	Ip        string    `json:"ip"`
 	UserAgent string    `json:"user_agent"`
+	Referer   string    `json:"referer"`
 	Status    int       `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
 }

@@ -61,6 +61,7 @@ func (h *LinkVisitHandler) List(c *gin.Context) {
 				Ip:        item.Ip.String,
 				UserAgent: item.UserAgent.String,
 				Status:    int(item.Status),
+				Referer:   item.Referer.String,
 				CreatedAt: item.CreatedAt,
 			},
 		)
