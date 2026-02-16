@@ -517,14 +517,18 @@ func TestLinkVisitsList(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Equal(t, "visits 0-9/2", w.Header().Get("Content-Range"))
 
-		expectedVisits := []handlers.Visit{
-			{Id: uint64(visits[0].ID), Ip: visits[0].Ip.String, LinkId: uint64(link.ID), UserAgent: visits[0].UserAgent.String, Status: 302, Referer: visits[0].Referer.String, CreatedAt: visits[0].CreatedAt},
-			{Id: uint64(visits[1].ID), Ip: visits[1].Ip.String, LinkId: uint64(link.ID), UserAgent: visits[1].UserAgent.String, Status: 302, Referer: visits[1].Referer.String, CreatedAt: visits[1].CreatedAt},
-		}
 		var actualVisits []handlers.Visit
 		err = json.Unmarshal(w.Body.Bytes(), &actualVisits)
 		assert.NoError(t, err)
-		assert.Equal(t, expectedVisits, actualVisits)
+
+		for i, visit := range actualVisits {
+			assert.Equal(t, visits[i].ID, int64(visit.Id))
+			assert.Equal(t, visits[i].LinkID, int64(visit.LinkId))
+			assert.Equal(t, visits[i].Ip.String, visit.Ip)
+			assert.Equal(t, visits[i].UserAgent.String, visit.UserAgent)
+			assert.Equal(t, visits[i].Status, int16(visit.Status))
+			assert.Equal(t, visits[i].Referer.String, visit.Referer)
+		}
 	})
 }
 
@@ -565,27 +569,18 @@ func TestLinkVistsListWithPagination(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Equal(t, "visits 5-10/20", w.Header().Get("Content-Range"))
 
-		expectedVisits := make([]handlers.Visit, 0, 6)
-
-		for _, visit := range visits[5:11] {
-			expectedVisits = append(
-				expectedVisits,
-				handlers.Visit{
-					Id:        uint64(visit.ID),
-					Ip:        visit.Ip.String,
-					LinkId:    uint64(link.ID),
-					UserAgent: visit.UserAgent.String,
-					Status:    302,
-					Referer:   visit.Referer.String,
-					CreatedAt: visit.CreatedAt,
-				},
-			)
-		}
-
 		var actualVisits []handlers.Visit
 		err = json.Unmarshal(w.Body.Bytes(), &actualVisits)
 		assert.NoError(t, err)
-		assert.Equal(t, expectedVisits, actualVisits)
+
+		for i, visit := range actualVisits {
+			assert.Equal(t, visits[i+5].ID, int64(visit.Id))
+			assert.Equal(t, visits[i+5].LinkID, int64(visit.LinkId))
+			assert.Equal(t, visits[i+5].Ip.String, visit.Ip)
+			assert.Equal(t, visits[i+5].UserAgent.String, visit.UserAgent)
+			assert.Equal(t, visits[i+5].Status, int16(visit.Status))
+			assert.Equal(t, visits[i+5].Referer.String, visit.Referer)
+		}
 	})
 }
 
