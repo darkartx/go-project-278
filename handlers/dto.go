@@ -11,7 +11,7 @@ type Link struct {
 
 type LinkParams struct {
 	OriginalUrl string `json:"original_url" binding:"required,url"`
-	ShortName   string `json:"short_name,omitempty" binding:"omitempty,alphanum,min=6,max=50"`
+	ShortName   string `json:"short_name,omitempty" binding:"omitempty,alphanum,min=3,max=32"`
 }
 
 type Error struct {

@@ -9,10 +9,8 @@ import (
 )
 
 var (
-	ErrorInvalidOriginalUrl   = errors.New("invalid original url")
 	ErrorInvalidId            = errors.New("invalid id")
-	ErrorInvalidShortName     = errors.New("invalid short name")
-	ErrorShortNameAlreadyUsed = errors.New("short name is already used")
+	ErrorShortNameAlreadyUsed = errors.New("short name already in use")
 	ErrorInvalidRange         = errors.New("invalid range param")
 )
 

@@ -237,7 +237,7 @@ func TestLinksCreateWithInvalidOriginalUrl(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
-		expected := `{"error":"Bad Request","message":"invalid original url"}`
+		expected := `{"error":"Bad Request","message":"Key: 'LinkParams.OriginalUrl' Error:Field validation for 'OriginalUrl' failed on the 'url' tag"}`
 		assert.JSONEq(t, expected, w.Body.String())
 	})
 }
@@ -254,7 +254,7 @@ func TestLinksCreateWithInvalidShortName(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
-		expected := `{"error":"Bad Request","message":"invalid short name"}`
+		expected := `{"error":"Bad Request","message":"Key: 'LinkParams.ShortName' Error:Field validation for 'ShortName' failed on the 'alphanum' tag"}`
 		assert.JSONEq(t, expected, w.Body.String())
 	})
 }
@@ -275,7 +275,7 @@ func TestLinksCreateWithUsedShortName(t *testing.T) {
 
 		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 
-		expected := `{"error":"Unprocessable Entity","message":"short name is already used"}`
+		expected := `{"error":"Unprocessable Entity","message":"short name already in use"}`
 		assert.JSONEq(t, expected, w.Body.String())
 	})
 }
@@ -396,7 +396,7 @@ func TestLinksUpdateWithInvalidOriginalUrl(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 
-	expected := `{"error":"Unprocessable Entity","message":"invalid original url"}`
+	expected := `{"error":"Unprocessable Entity","message":"Key: 'LinkParams.OriginalUrl' Error:Field validation for 'OriginalUrl' failed on the 'url' tag"}`
 	assert.JSONEq(t, expected, w.Body.String())
 }
 
@@ -411,7 +411,7 @@ func TestLinksUpdateWithInvalidShortName(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 
-	expected := `{"error":"Unprocessable Entity","message":"invalid short name"}`
+	expected := `{"error":"Unprocessable Entity","message":"Key: 'LinkParams.ShortName' Error:Field validation for 'ShortName' failed on the 'alphanum' tag"}`
 	assert.JSONEq(t, expected, w.Body.String())
 }
 

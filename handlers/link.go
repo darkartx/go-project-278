@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 
@@ -190,18 +189,6 @@ func parseAndValidateParams(c *gin.Context) (LinkParams, error) {
 	var params LinkParams
 
 	if err := c.ShouldBindJSON(&params); err != nil {
-		validationErrors, ok := err.(validator.ValidationErrors)
-
-		if ok && len(validationErrors) > 0 {
-			firstError := validationErrors[0]
-			switch firstError.StructField() {
-			case "OriginalUrl":
-				err = ErrorInvalidOriginalUrl
-			case "ShortName":
-				err = ErrorInvalidShortName
-			}
-		}
-
 		return LinkParams{}, err
 	}
 
