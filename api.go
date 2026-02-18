@@ -1,10 +1,12 @@
-package code
+package main
 
 import (
-	db "code/db/generated"
-	"code/handlers"
 	"database/sql"
 	"net/http"
+
+	"github.com/darkartx/go-project-278/handlers"
+
+	db "github.com/darkartx/go-project-278/db/generated"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/rollbar"

@@ -1,16 +1,17 @@
 package handlers
 
 import (
-	"code/internal"
 	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/darkartx/go-project-278/internal"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 
-	db "code/db/generated"
+	db "github.com/darkartx/go-project-278/db/generated"
 )
 
 const (

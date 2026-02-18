@@ -1,9 +1,7 @@
-package code
+package main
 
 import (
 	"bytes"
-	db "code/db/generated"
-	"code/handlers"
 	"context"
 	"database/sql"
 	"embed"
@@ -15,6 +13,9 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	db "github.com/darkartx/go-project-278/db/generated"
+	"github.com/darkartx/go-project-278/handlers"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/jackc/pgx/v5/stdlib"

@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	db "code/db/generated"
 	"database/sql"
 	"net/http"
 	"regexp"
 	"strconv"
+
+	db "github.com/darkartx/go-project-278/db/generated"
 
 	"github.com/gin-gonic/gin"
 )

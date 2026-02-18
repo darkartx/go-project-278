@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	db "code/db/generated"
+	db "github.com/darkartx/go-project-278/db/generated"
 )
 
 type LinkVisitHandler struct {

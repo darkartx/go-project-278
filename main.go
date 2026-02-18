@@ -7,8 +7,6 @@ import (
 
 	"github.com/joho/godotenv"
 	cli "github.com/urfave/cli/v3"
-
-	"code"
 )
 
 func main() {
@@ -58,9 +56,9 @@ func main() {
 					port := c.String("port")
 					databaseUrl := c.String("db")
 
-					config := code.NewConfig(debug, databaseUrl, port)
+					config := NewConfig(debug, databaseUrl, port)
 
-					return code.Api(config)
+					return Api(config)
 				},
 			},
 		},

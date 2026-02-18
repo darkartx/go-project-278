@@ -30,7 +30,7 @@ lint: ## Lint code
 	golangci-lint run ./...
 
 build: ## Build app
-	go build -ldflags="-X code.commitHash=$(git rev-parse HEAD)" -o bin/url_shortener ./cmd/url_shortener
+	go build -ldflags="-X code.commitHash=$(git rev-parse HEAD)" -o bin/url_shortener .
 
 db-migrate: ## Run database migrations
 	$(MIGRATOR) up

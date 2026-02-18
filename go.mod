@@ -1,4 +1,4 @@
-module code
+module github.com/darkartx/go-project-278
 
 go 1.24.5
 
