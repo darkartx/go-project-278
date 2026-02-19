@@ -3,14 +3,18 @@ package main
 import (
 	"database/sql"
 	"net/http"
+	"reflect"
+	"strings"
 
 	"github.com/darkartx/go-project-278/handlers"
+	"github.com/go-playground/validator/v10"
 
 	db "github.com/darkartx/go-project-278/db/generated"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/rollbar"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -30,6 +34,8 @@ func Api(config *Config) error {
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
+	setupValidator()
 
 	database, err := setupDB(config)
 	if err != nil {
@@ -91,4 +97,17 @@ func setupDB(config *Config) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func setupValidator() {
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		// Регестрируем функцию для получения имени поля из тега JSON
+		v.RegisterTagNameFunc(func(fld reflect.StructField) string {
+			name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+			if name == "-" {
+				return ""
+			}
+			return name
+		})
+	}
 }

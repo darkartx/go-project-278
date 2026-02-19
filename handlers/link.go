@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/darkartx/go-project-278/internal"
+	"github.com/go-playground/validator/v10"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgerrcode"
@@ -86,7 +87,7 @@ func (h *LinkHandler) Create(c *gin.Context) {
 	input, err := parseAndValidateParams(c)
 
 	if err != nil {
-		sendError(http.StatusBadRequest, err, c)
+		handleParseAndValidationError(err, c)
 		return
 	}
 
@@ -103,7 +104,7 @@ func (h *LinkHandler) Create(c *gin.Context) {
 	})
 
 	if err != nil {
-		handleLinkCreateError(err, c)
+		handleLinkCreateUpdateError(err, c)
 		return
 	}
 
@@ -144,7 +145,7 @@ func (h *LinkHandler) Update(c *gin.Context) {
 	input, err = parseAndValidateParams(c)
 
 	if err != nil {
-		sendError(http.StatusUnprocessableEntity, err, c)
+		handleParseAndValidationError(err, c)
 		return
 	}
 
@@ -158,7 +159,7 @@ func (h *LinkHandler) Update(c *gin.Context) {
 	var link db.Link
 	link, err = h.queries.UpdateLink(c, db.UpdateLinkParams{ID: int64(id), OriginalUrl: input.OriginalUrl, ShortName: shortName})
 	if err != nil {
-		handleDbError(err, c)
+		handleLinkCreateUpdateError(err, c)
 		return
 	}
 
@@ -190,18 +191,44 @@ func parseAndValidateParams(c *gin.Context) (LinkParams, error) {
 	var params LinkParams
 
 	if err := c.ShouldBindJSON(&params); err != nil {
-		return LinkParams{}, err
+		var ve validator.ValidationErrors
+
+		if errors.As(err, &ve) {
+			newErr := NewErrorFieldErrors()
+
+			for _, ei := range ve {
+				newErr.Add(ei.Field(), ei)
+			}
+
+			return LinkParams{}, newErr
+		}
+
+		return LinkParams{}, ErrorInvalidRequest
 	}
 
 	return params, nil
 }
 
-func handleLinkCreateError(err error, c *gin.Context) {
+func handleParseAndValidationError(err error, c *gin.Context) {
+	var fieldsError ErrorFieldErrors
+
+	if errors.As(err, &fieldsError) {
+		sendError(http.StatusUnprocessableEntity, err, c)
+		return
+	}
+
+	sendError(http.StatusBadRequest, err, c)
+}
+
+func handleLinkCreateUpdateError(err error, c *gin.Context) {
 	var pgErr *pgconn.PgError
+
 	if errors.As(err, &pgErr) {
 		// Unique constraint
 		if pgErr.Code == pgerrcode.UniqueViolation {
-			sendError(http.StatusUnprocessableEntity, ErrorShortNameAlreadyUsed, c)
+			newErr := NewErrorFieldErrors()
+			newErr.Add("short_name", ErrorShortNameAlreadyUsed)
+			sendError(http.StatusUnprocessableEntity, newErr, c)
 			return
 		}
 	}

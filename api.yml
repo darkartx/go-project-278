@@ -247,16 +247,15 @@ components:
           example: ""
     Error:
       type: object
-      required:
-        - error
-        - message
       properties:
         error:
           type: string
           description: Error name
-        message:
-          type: string
-          description: Error message
+        errors:
+          type: array
+          description: Error field messages
+          items:
+            type: object
   securitySchemes:
     defaultApiKey:
       type: apiKey

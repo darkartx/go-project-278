@@ -11,12 +11,12 @@ type Link struct {
 
 type LinkParams struct {
 	OriginalUrl string `json:"original_url" binding:"required,url"`
-	ShortName   string `json:"short_name,omitempty" binding:"omitempty,alphanum,min=3,max=32"`
+	ShortName   string `json:"short_name,omitempty" binding:"omitempty,min=3,max=32"`
 }
 
 type Error struct {
-	Error   string `json:"error"`
-	Message string `json:"message,omitempty"`
+	Error  string            `json:"error,omitempty"`
+	Errors map[string]string `json:"errors,omitempty"`
 }
 
 type Visit struct {

@@ -12,19 +12,40 @@ var (
 	ErrorInvalidId            = errors.New("invalid id")
 	ErrorShortNameAlreadyUsed = errors.New("short name already in use")
 	ErrorInvalidRange         = errors.New("invalid range param")
+	ErrorInvalidRequest       = errors.New("invalid request")
 )
 
-func sendError(code int, err error, c *gin.Context) {
-	message := ""
+type ErrorFieldErrors struct {
+	Errors map[string]error
+}
 
-	if err != nil {
-		message = err.Error()
+func (e ErrorFieldErrors) Error() string {
+	return "invalid request"
+}
+
+func (e *ErrorFieldErrors) Add(field string, err error) {
+	e.Errors[field] = err
+}
+
+func NewErrorFieldErrors() ErrorFieldErrors {
+	errors := make(map[string]error)
+	return ErrorFieldErrors{errors}
+}
+
+func sendError(code int, err error, c *gin.Context) {
+	var fieldErrors ErrorFieldErrors
+	var result Error
+
+	if errors.As(err, &fieldErrors) {
+		result.Errors = make(map[string]string)
+		for field, fe := range fieldErrors.Errors {
+			result.Errors[field] = fe.Error()
+		}
+	} else {
+		result.Error = err.Error()
 	}
 
-	c.JSON(code, Error{
-		Error:   http.StatusText(code),
-		Message: message,
-	})
+	c.JSON(code, result)
 }
 
 func handleDbError(err error, c *gin.Context) {
@@ -42,14 +63,12 @@ func handleDbError(err error, c *gin.Context) {
 
 func sendNotFound(c *gin.Context) {
 	c.JSON(http.StatusNotFound, Error{
-		Error:   http.StatusText(http.StatusNotFound),
-		Message: "Not found",
+		Error: "Not found",
 	})
 }
 
 func sendServerError(c *gin.Context) {
 	c.JSON(http.StatusInternalServerError, Error{
-		Error:   http.StatusText(http.StatusInternalServerError),
-		Message: "Something went wrong",
+		Error: "Something went wrong",
 	})
 }
