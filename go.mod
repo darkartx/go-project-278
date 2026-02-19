@@ -12,7 +12,6 @@ require (
 	github.com/pressly/goose/v3 v3.26.0
 	github.com/rollbar/rollbar-go v1.4.8
 	github.com/stretchr/testify v1.11.1
-	github.com/urfave/cli/v3 v3.6.2
 )
 
 require (
