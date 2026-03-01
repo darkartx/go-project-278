@@ -31,7 +31,7 @@ func getConfigFromEnv() (Config, error) {
 	result := Config{
 		Debug:       false,
 		DatabaseUrl: "",
-		Bind:        "127.0.0.1:8080",
+		Bind:        "0.0.0.0:8080",
 	}
 
 	if debugEnv, exists := os.LookupEnv("DEBUG"); exists {
@@ -45,6 +45,10 @@ func getConfigFromEnv() (Config, error) {
 
 	if databaseUrl, exists := os.LookupEnv("DATABASE_URL"); exists {
 		result.DatabaseUrl = databaseUrl
+	}
+
+	if port, exists := os.LookupEnv("PORT"); exists {
+		result.Bind = fmt.Sprintf("0.0.0.0:%s", port)
 	}
 
 	if bind, exists := os.LookupEnv("BIND"); exists {
