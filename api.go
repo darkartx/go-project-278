@@ -21,11 +21,11 @@ import (
 type Config struct {
 	Debug       bool
 	DatabaseUrl string
-	Port        string
+	Bind        string
 }
 
-func NewConfig(debug bool, databaseUrl string, port string) *Config {
-	return &Config{debug, databaseUrl, port}
+func NewConfig(debug bool, databaseUrl string, bind string) *Config {
+	return &Config{debug, databaseUrl, bind}
 }
 
 func Api(config *Config) error {
@@ -54,7 +54,7 @@ func Api(config *Config) error {
 		router.Use(rollbar.Recovery(true))
 	}
 
-	return router.Run(":" + config.Port)
+	return router.Run(config.Bind)
 }
 
 func setupRouter(queries *db.Queries, config *Config) *gin.Engine {
