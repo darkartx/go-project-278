@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/rollbar/rollbar-go"
@@ -15,12 +14,6 @@ func setupRollbar() bool {
 	if token == "" {
 		return false
 	}
-
-	fmt.Println("ROLLBAR_TOKEN: ", token)
-	fmt.Println("ROLLBAR_ENV: ", getEnv("ROLLBAR_ENV", "development"))
-	fmt.Println("commitHash: ", commitHash)
-	fmt.Println("HOSTNAME: ", getEnv("HOSTNAME", ""))
-	fmt.Println("ROLLBAR_SERVER_ROOT: ", getEnv("ROLLBAR_SERVER_ROOT", "/"))
 
 	rollbar.SetToken(token)
 	rollbar.SetEnvironment(getEnv("ROLLBAR_ENV", "development"))
