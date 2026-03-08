@@ -454,6 +454,17 @@ func TestLinksDelete(t *testing.T) {
 			t.Fatalf("create link: %v", err)
 		}
 
+		_, err = q.CreateVisit(ctx, db.CreateVisitParams{
+			LinkID:    link.ID,
+			Ip:        sql.NullString{String: "", Valid: false},
+			UserAgent: sql.NullString{String: "", Valid: false},
+			Referer:   sql.NullString{String: "", Valid: false},
+			Status:    http.StatusFound,
+		})
+		if err != nil {
+			t.Fatalf("create visit: %v", err)
+		}
+
 		req, _ := http.NewRequest("DELETE", fmt.Sprint("http://localhost/api/links/", link.ID), nil)
 
 		w := httptest.NewRecorder()

@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE visits (
     id BIGSERIAL PRIMARY KEY,
-    link_id BIGINT REFERENCES links(id) NOT NULL,
+    link_id BIGINT REFERENCES links(id) ON DELETE CASCADE NOT NULL,
     ip VARCHAR(45),
     user_agent VARCHAR(255),
     referer VARCHAR(2083),
